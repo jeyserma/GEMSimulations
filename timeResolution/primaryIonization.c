@@ -58,12 +58,6 @@ struct cluster {
     std::vector<Double_t> x1, y1, z1, t1, e1, vx1, vy1, vz1;
 };
 
-struct test {
-    
-    Double_t x0;
-};
-
-
 struct particle {
     
     //TString type;
@@ -72,15 +66,6 @@ struct particle {
     Int_t noClusters;
     Double_t lambda, stoppingPower;
     
-};
-
-
-struct avalancheI {
-    
-    Double_t x0, y0, z0, t0;
-    Int_t ni;
-    std::vector<Double_t> x1, y1, z1, x2, y2, z2, t1, e1, t2, e2;
-    std::vector<Int_t> status;
 };
 
 TString int2str(Int_t t) {
@@ -200,7 +185,6 @@ int main(int argc, char * argv[]) {
     // Prepare tree for electrons
     particle p;
     TTree *pTree = new TTree("pTree", "Charged particle");
-    pTree->Branch("test", &p.clusters);
     pTree->Branch("x0", &p.x0);
     pTree->Branch("y0", &p.y0);
     pTree->Branch("z0", &p.z0);
@@ -213,8 +197,7 @@ int main(int argc, char * argv[]) {
     pTree->Branch("noClusters", &p.noClusters);
     pTree->Branch("stoppingpower", &p.stoppingPower);
     pTree->Branch("lambda", &p.lambda);
-    
-
+    pTree->Branch("clusters", &p.clusters);
     
     // Start iteration
 	for(int i=0; i<it; i++) {
@@ -252,7 +235,6 @@ int main(int argc, char * argv[]) {
         p.lambda = 1/heed->GetClusterDensity();
         p.stoppingPower = heed->GetStoppingPower();
         
-    
         heed->NewTrack(x0, y0, z0, t0, vx0, vy0, vz0);
         
         // Loop over clusters
@@ -263,7 +245,7 @@ int main(int argc, char * argv[]) {
             test tmpCl;
             tmpCl.x0 = x1;
             std::cout << p.clusters.size() << std::endl;
-           /*
+           
             tmpCl.y0 = y1;
             tmpCl.z0 = z1;
             tmpCl.nc = nc;
@@ -286,11 +268,9 @@ int main(int argc, char * argv[]) {
                 tmpCl.vx1.push_back(vx2);
                 tmpCl.vy1.push_back(vy2);
                 tmpCl.vz1.push_back(vz2);
-            }
-            * */
+            }     
     
             p.clusters.push_back(tmpCl);
-           
         }
 
         pTree->Fill();
@@ -298,7 +278,6 @@ int main(int argc, char * argv[]) {
 	}
 
     pTree->Write();
-    //ITree->Write();
     file->Close();
     
     
