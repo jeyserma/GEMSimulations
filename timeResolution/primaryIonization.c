@@ -6,47 +6,22 @@
 
 // General libs
 #include <iostream>
-#include <fstream>
-#include <sstream>
-#include <cmath>
-#include <stdio.h>     
-#include <stdlib.h> 
-#include <math.h> 
 
 // ROOT libs
 #include <TROOT.h>
 #include <TFile.h>
 #include <TApplication.h>
-#include <TCanvas.h>
-#include <TH1F.h>
 #include <TMath.h>
-#include <TGeoManager.h>
 #include <TTree.h>
-#include <TGeoMaterial.h>
-#include <TGeoMedium.h>
-#include <TGeoVolume.h>
-#include <TGeoBBox.h>
-#include <TGeoTube.h>
-#include <TGeoPcon.h>
-#include <TGeoHalfSpace.h>
-#include <TGeoMatrix.h>
-#include <TGeoCompositeShape.h>
-#include <TLegend.h>
-#include <TBenchmark.h>
+#include <TBranch.h>
 
 // Garfield++ libs
 #include "ComponentAnsys123.hh"
-#include "ViewField.hh"
 #include "MediumMagboltz.hh"
 #include "Sensor.hh"
-#include "AvalancheMicroscopic.hh"
-#include "AvalancheMC.hh"
 #include "Random.hh"
-#include "Plotting.hh"
-#include "DriftLineRKF.hh"
 #include "TrackHeed.hh"
-#include "ComponentAnalyticField.hh"
-#include "ViewSignal.hh" 
+
 
 using namespace Garfield;
 const std::string GARFIELD = "/afs/cern.ch/user/j/jeyserma/garfieldpp/";
@@ -60,31 +35,29 @@ struct cluster {
 
 struct particle {
     
-    //TString type;
-    std::vector<test> clusters;
+    TString type;
     Double_t x0, y0, z0, vx0, vy0, vz0, e0, t0;
     Int_t noClusters;
     Double_t lambda, stoppingPower;
-    
+    std::vector<cluster> clusters;
 };
 
-TString int2str(Int_t t) {
-    TString str; 
-    str.Form("%d", t);
-    return str;
-} 
-
 int main(int argc, char * argv[]) {
+    
+    // Charged particle settings
+    std::string particleType = "mu";
+    Double_t particleEnergy = 100.e9; 
+    
+    bool debug = true;
+    const int it = 100;
 
 	TApplication app("app", &argc, argv);
  	gRandom = new TRandom3(0); // set random seed
+    gROOT->ProcessLine(".L loader.c+"); // Initialize struct objects (see dictionaries)
     
     std::string workingdir = "includes/";
     workingdir.append(argv[1]);
     workingdir.append("/");
-
-    bool debug = true;
-    const int it = 5;
 
 	// Load GEM dimensions and list files
 	FILE *fp;
@@ -163,8 +136,8 @@ int main(int argc, char * argv[]) {
     TrackHeed* heed = new TrackHeed();
     heed->SetSensor(sensor);
     //heed->DisableDeltaElectronTransport();
-    heed->SetParticle("mu");
-    heed->SetMomentum(100.e9); // 100 GeV
+    heed->SetParticle(particleType);
+    heed->SetMomentum(particleEnergy); // 100 GeV
     if(debug) {
         heed->EnableDebugging();
     }
@@ -178,12 +151,11 @@ int main(int argc, char * argv[]) {
     TRandom3 r;
     r.SetSeed(0);
     
-    // Prepare trees and saving file
     TString savefile = workingdir + "output/primaryIonization.root";
     TFile *file = new TFile(savefile, "RECREATE");
     
-    // Prepare tree for electrons
     particle p;
+    cluster c;
     TTree *pTree = new TTree("pTree", "Charged particle");
     pTree->Branch("x0", &p.x0);
     pTree->Branch("y0", &p.y0);
@@ -193,12 +165,12 @@ int main(int argc, char * argv[]) {
     pTree->Branch("vz0", &p.vz0);
     pTree->Branch("t0", &p.t0);
     pTree->Branch("e0", &p.e0);
-    //pTree->Branch("type", &p.type);
+    pTree->Branch("type", "TString", &p.type);
     pTree->Branch("noClusters", &p.noClusters);
     pTree->Branch("stoppingpower", &p.stoppingPower);
     pTree->Branch("lambda", &p.lambda);
-    pTree->Branch("clusters", &p.clusters);
-    
+    pTree->Branch("clusters", "std::vector<cluster>", &p.clusters);
+
     // Start iteration
 	for(int i=0; i<it; i++) {
         
@@ -229,8 +201,8 @@ int main(int argc, char * argv[]) {
         p.vy0 = vy0;
         p.vz0 = vz0;
         p.t0 = t0;
-        p.e0 = 100.e9   ;
-        //p.type = "muon";
+        p.e0 = particleEnergy;
+        p.type = particleType;
         p.noClusters = 0;
         p.lambda = 1/heed->GetClusterDensity();
         p.stoppingPower = heed->GetStoppingPower();
@@ -241,15 +213,11 @@ int main(int argc, char * argv[]) {
         while(heed->GetCluster(x1, y1, z1, t1, nc, ec, extra)) {
             
             p.noClusters++;
-            
-            test tmpCl;
-            tmpCl.x0 = x1;
-            std::cout << p.clusters.size() << std::endl;
-           
-            tmpCl.y0 = y1;
-            tmpCl.z0 = z1;
-            tmpCl.nc = nc;
-            tmpCl.ec = ec;
+            c.x0 = x1;
+            c.y0 = y1;
+            c.z0 = z1;
+            c.nc = nc;
+            c.ec = ec;
          
             // Skip the clusters which are not in the drift region
             if(z1 > drift) {
@@ -260,108 +228,26 @@ int main(int argc, char * argv[]) {
 
                 heed->GetElectron(j, x2, y2, z2, t2, e2, vx2, vy2, vz2);
                     
-                tmpCl.x1.push_back(x2);
-                tmpCl.y1.push_back(y2);
-                tmpCl.z1.push_back(z2);
-                tmpCl.t1.push_back(t2);
-                tmpCl.e1.push_back(e2);
-                tmpCl.vx1.push_back(vx2);
-                tmpCl.vy1.push_back(vy2);
-                tmpCl.vz1.push_back(vz2);
+                c.x1.push_back(x2);
+                c.y1.push_back(y2);
+                c.z1.push_back(z2);
+                c.t1.push_back(t2);
+                c.e1.push_back(e2);
+                c.vx1.push_back(vx2);
+                c.vy1.push_back(vy2);
+                c.vz1.push_back(vz2);
             }     
-    
-            p.clusters.push_back(tmpCl);
+
+            p.clusters.push_back(c);
         }
 
         pTree->Fill();
         p.clusters.clear(); 
 	}
-
+   
     pTree->Write();
     file->Close();
     
-    
-    /*
-	TCanvas* c1 = new TCanvas("c1", "Signal");
-    ViewSignal* signalView = new ViewSignal();
-    TString filename;
-	signalView->SetSensor(sensor);
-	signalView->SetCanvas(c1);
-
-    filename = workingdir + "/output/" + argv[2] + "drift/timeEl.root";
-    signalView->PlotSignal("readout");
-	c1->SaveAs(filename);
-    c1->Clear();
-    
-    filename = workingdir + "/output/" + argv[2] + "drift/timeIon.root";
-	signalView->PlotSignal("ions");
-	c1->SaveAs(filename);
-    c1->Clear();
-    
-    
-    
-    sensor->SetTransferFunction(transferf);
-    sensor->ConvoluteSignal();
-    
-    tau = 1.;
-    sensor->SetTransferFunction(transferf);
-    sensor->ConvoluteSignal();
-    
-    filename = workingdir + "/output/" + argv[2] + "drift/timeElTransfer1.root";
-    signalView->PlotSignal("readout");
-	c1->SaveAs(filename);
-    c1->Clear();
-    
-    filename = workingdir + "/output/" + argv[2] + "drift/timeIonTransfer1.root";
-	signalView->PlotSignal("ions");
-	c1->SaveAs(filename);
-    c1->Clear();
-    
-    tau = 5.;
-    sensor->SetTransferFunction(transferf);
-    sensor->ConvoluteSignal();
-    
-    filename = workingdir + "/output/" + argv[2] + "drift/timeElTransfer5.root";
-    signalView->PlotSignal("readout");
-	c1->SaveAs(filename);
-    c1->Clear();
-    
-    filename = workingdir + "/output/" + argv[2] + "drift/timeIonTransfer5.root";
-	signalView->PlotSignal("ions");
-	c1->SaveAs(filename);
-    c1->Clear();
-    
-    tau = 10.;
-    sensor->SetTransferFunction(transferf);
-    sensor->ConvoluteSignal();
-    
-    filename = workingdir + "/output/" + argv[2] + "drift/timeElTransfer10.root";
-    signalView->PlotSignal("readout");
-	c1->SaveAs(filename);
-    c1->Clear();
-    
-    filename = workingdir + "/output/" + argv[2] + "drift/timeIonTransfer10.root";
-	signalView->PlotSignal("ions");
-	c1->SaveAs(filename);
-    c1->Clear();
-    
-    tau = 25.;
-    sensor->SetTransferFunction(transferf);
-    sensor->ConvoluteSignal();
-    
-    filename = workingdir + "/output/" + argv[2] + "drift/timeElTransfer25.root";
-    signalView->PlotSignal("readout");
-	c1->SaveAs(filename);
-    c1->Clear();
-    
-    filename = workingdir + "/output/" + argv[2] + "drift/timeIonTransfer25.root";
-	signalView->PlotSignal("ions");
-	c1->SaveAs(filename);
-    c1->Clear();
-
-     * */
 	return 0;
 	app.Run(); 
 }
-
-

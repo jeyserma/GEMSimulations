@@ -47,7 +47,7 @@ int main(int argc, char * argv[]) {
  	gRandom = new TRandom3(0); // set random seed
      
     MediumMagboltz* gas = new MediumMagboltz();
-    gas->SetComposition("ar", 75., "co2", 25.);
+    gas->SetComposition("ar", 50., "co2", 25., "cf4", 25);
     gas->SetTemperature(293.15);
     gas->SetPressure(760.);
   
@@ -68,10 +68,11 @@ int main(int argc, char * argv[]) {
     // Generate gas table
     gas->GenerateGasTable(5, true);
     
-    gas->WriteGasFile("data/Ar-CO2-75-25.gas");
+    gas->WriteGasFile("data/Ar-CO2-CF4-50-25-25.gas");
     
     std::cout << "--------------- TIMING ---------------" << std::endl;
     std::cout << watch.CpuTime() << std::endl;
-	return 0;
-	app.Run(); 
+
+    return 0;
+    app.Run(); 
 }

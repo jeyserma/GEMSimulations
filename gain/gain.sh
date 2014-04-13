@@ -9,7 +9,7 @@ echo "----------------------------------------"
 echo "------------- COMPILING ----------------"
 echo "----------------------------------------"
 
-cd /afs/cern.ch/work/j/jeyserma/private/GEM/SingleGEM/gain/
+cd /afs/cern.ch/work/j/jeyserma/private/GEMSimulations/gain/
 make
 
 # Executing rules...
@@ -17,4 +17,13 @@ echo "----------------------------------------"
 echo "-------------- EXECUTE -----------------"
 echo "----------------------------------------"
 
-./gain 1_1
+#./gain 2_1
+./gain 2_2
+./gain 2_3
+./gain 2_4
+./gain 2_5
+./gain 2_6
+./gain 2_7
+./gain 2_8
+./gain 2_9
+#./gain 2_10

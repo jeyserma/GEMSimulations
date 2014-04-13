@@ -9,7 +9,7 @@ echo "----------------------------------------"
 echo "------------- COMPILING ----------------"
 echo "----------------------------------------"
 
-cd /afs/cern.ch/work/j/jeyserma/private/GEM/gasTable/
+cd /afs/cern.ch/work/j/jeyserma/private/GEMSimulations/gasTable/
 make
 
 # Executing rules...

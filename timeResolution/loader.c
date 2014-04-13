@@ -1,4 +1,4 @@
-// Loader.C
+// Loader.c
 #include "primaryIonization.h"
 #include <vector>
 
