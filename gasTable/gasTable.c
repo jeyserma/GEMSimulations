@@ -36,31 +36,29 @@ int main(int argc, char * argv[]) {
        
     	TStopwatch watch;
 
-	TApplication app("app", &argc, argv);
- 	plottingEngine.SetDefaultStyle();
  	gRandom = new TRandom3(0); // set random seed
      
     	MediumMagboltz* gas = new MediumMagboltz();
-	    gas->SetComposition("Ar", 75., "CO2", 25.);
+	gas->SetComposition("Ar", 75., "CO2", 25.);
 	gas->SetTemperature(293.15);
-	    gas->SetPressure(760.);
-	  
-	    gas->PrintGas();
-	    // Calculation from 0 kV/cm to 40 kV/cm in 50 steps
-	    gas->SetFieldGrid(0., 40000., 50, false, 0., 0., 1, 0., 0., 1);
+	gas->SetPressure(760.);
 	    
-	    gas->EnableDebugging();
-	    gas->Initialise();  
-	    gas->DisableDebugging();
+	gas->PrintGas();
+ 	
+ 	// Calculation from 0 kV/cm to 40 kV/cm in 50 steps
+	gas->SetFieldGrid(0., 40000., 50, false, 0., 0., 1, 0., 0., 1);
 	    
-	    // Generate gas table
-	    gas->GenerateGasTable(5, true);
+	gas->EnableDebugging();
+	gas->Initialise();  
+	gas->DisableDebugging();
 	    
-	    gas->WriteGasFile("data/Ar-CO2-75-25.gas");
+	// Generate gas table
+  	gas->GenerateGasTable(5, true);
 	    
-	    std::cout << "--------------- TIMING ---------------" << std::endl;
-	    std::cout << watch.CpuTime() << std::endl;
+	gas->WriteGasFile("data/Ar-CO2-75-25.gas");
+	    
+	std::cout << "--------------- TIMING ---------------" << std::endl;
+	std::cout << watch.CpuTime() << std::endl;
 	
-	    return 0;
-	    app.Run(); 
+	return 0;
 }
