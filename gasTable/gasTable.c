@@ -42,7 +42,7 @@ int main(int argc, char * argv[]) {
      
     	MediumMagboltz* gas = new MediumMagboltz();
 	    gas->SetComposition("Ar", 75., "CO2", 25.);
-	    gas->SetTemperature(293.15);
+	gas->SetTemperature(293.15);
 	    gas->SetPressure(760.);
 	  
 	    gas->PrintGas();
