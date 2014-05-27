@@ -1,0 +1,14 @@
+layers 1
+kapton 0.005
+metal 0.0005
+pitch 0.014
+outdia 0.0085
+middia 0.0055
+rim 0.0085
+driftRegionVoltage 270
+driftRegionThickness 0.2
+GEMVoltage1 460
+inductRegionVoltage 400
+inductRegionThickness 0.1
+totalThickness 0.306
+totalVoltage 1130
