@@ -1,0 +1,252 @@
+FINISH
+/CLEAR,START
+/PREP7
+
+! No polynomial elements
+/PMETH,OFF,1
+
+! Set electric preferences
+KEYW,PR_ELMAG,1
+KEYW,MAGELC,1
+
+! Select element
+ET,1,SOLID123
+
+! Construct the GEM
+pitch = 0.14
+kapton = 0.05
+metal = 0.005
+outdia = 0.085
+middia = 0.055
+rim  = 0.085
+drift = 2
+induct = 1
+transfer = 1
+
+! Material properties
+MP,PERX,1,1e10
+MP,RSVX,1,0.0
+MP,PERX,2,1.0
+MP,PERX,3,4.0
+
+! GEM LAYER 1
+BLOCK, 0, 0.14/2, 0, sqrt(3)*0.14/2, 2, 2.005
+BLOCK, 0, 0.14/2, 0, sqrt(3)*0.14/2, 2.005, 2.055
+BLOCK, 0, 0.14/2, 0, sqrt(3)*0.14/2, 2.055, 2.06
+
+! TOTAL GAS GAP
+BLOCK, 0, 0.14/2, 0, sqrt(3)*0.14/2, 0, 3.06
+
+! Make cut-out pieces in layer 1 at x=y=0
+WPOFFS, 0, 0, 2.03
+CONE, outdia/2, middia/2, -kapton/2,   0, 0, 360
+CONE, middia/2, outdia/2, 0, kapton/2, 0, 0, 360
+WPOFFS, 0, 0, kapton/2
+CYL4,   0, 0, rim/2, ,,, metal
+WPOFFS, 0, 0, -kapton
+CYL4,   0, 0, rim/2, ,,, -metal
+WPOFFS, 0, 0, kapton/2
+WPOFFS, 0, 0, -2.03
+VADD, 5, 6, 7, 8
+
+! Make cut-out pieces in layer 1 at x=pitch/2, y=sqrt(3)/2*pitch
+WPOFFS, pitch/2, sqrt(3)*pitch/2, 2.03
+CONE, outdia/2, middia/2, -kapton/2,   0, 0, 360
+CONE, middia/2, outdia/2, 0, kapton/2, 0, 0, 360
+WPOFFS, 0, 0, kapton/2
+CYL4,   0, 0, rim/2, ,,, metal
+WPOFFS, 0, 0, -kapton
+CYL4,   0, 0, rim/2, ,,, -metal
+WPOFFS, 0, 0, kapton/2
+WPOFFS, -pitch/2, -sqrt(3)*pitch/2, -2.03
+VADD, 5, 6, 7, 8
+
+! Substract holes in layer 1
+VSBV,  1,  9, , DELETE, KEEP
+VSBV,  5,  10, , DELETE, KEEP
+VSBV,  2,  9, , DELETE, KEEP
+VSBV,  5,  10, , DELETE, KEEP
+VSBV,  3,  9, , DELETE, DELETE
+VSBV,  5,  10, , DELETE, DELETE
+
+! Subtract the kapton and metal from the gas
+VSBV, 4, 1, , KEEP, KEEP
+VSBV, 5, 2, , KEEP, KEEP
+VSBV, 6, 3, , KEEP, KEEP
+VDEL, 4
+VDEL, 5
+VDEL, 6
+NUMCMP, VOLU
+
+! Gluing the pieces metal-kapton-metal
+VGLUE, 1, 2
+VGLUE, 5, 3
+
+! Paint the pieces
+/COLOR, VOLU, RED, 4
+/COLOR, VOLU, BLACK, 1
+/COLOR, VOLU, ORANGE, 2
+/COLOR, VOLU, BLACK, 3
+
+! Assign materials
+VSEL, S, , , 4
+VATT, 2, ,1
+VSEL, S, , , 1
+VATT, 1, ,1
+VSEL, S, , , 2
+VATT, 3, ,1
+VSEL, S, , , 3
+VATT, 1, ,1
+
+! Voltage boundaries on the drift and induction plane
+ASEL, S, LOC, Z, 0
+DA, ALL, VOLT, -1130
+ASEL, S, LOC, Z, 3.06
+DA, ALL, VOLT, 0
+
+! Symmetric boundary conditions on the sides: GAS
+VSEL, S, , , 4
+ASLV, S
+ASEL, R, LOC, X, 0
+DA, ALL, SYMM
+VSEL, S, , , 4
+ASLV, S
+ASEL, R, LOC, X, 0.14/2
+DA, ALL, SYMM
+VSEL, S, , , 4
+ASLV, S
+ASEL, R, LOC, Y, 0
+DA, ALL, SYMM
+VSEL, S, , , 4
+ASLV, S
+ASEL, R, LOC, Y, sqrt(3)*0.14/2
+DA, ALL, SYMM
+
+! Symmetric boundary conditions on the sides: KAPTON (layer: 1)
+VSEL, S, , , 2
+ASLV, S
+ASEL, R, LOC, X, 0
+DA, ALL, SYMM
+VSEL, S, , , 2
+ASLV, S
+ASEL, R, LOC, X, 0.14/2
+DA, ALL, SYMM
+VSEL, S, , , 2
+ASLV, S
+ASEL, R, LOC, Y, 0
+DA, ALL, SYMM
+VSEL, S, , , 2
+ASLV, S
+ASEL, R, LOC, Y, sqrt(3)*0.14/2
+DA, ALL, SYMM
+
+! Voltage boundary condition on the metal (layer: 1)
+VSEL, S, , , 1
+ASLV, S
+DA, ALL, VOLT, -860
+VSEL, S, , , 3
+ASLV, S
+DA, ALL, VOLT, -400
+
+! Meshing options
+VSEL, S,,, 1, 4
+ASLV, S
+MSHKEY,0
+SMRT, 1
+VSEL, S, , , 4
+VSEL, A, , , 2
+VMESH, ALL
+
+! Solve the field
+/SOLU
+SOLVE
+FINISH
+
+! Display the solution
+/POST1
+/EFACET, 1
+PLNSOL, VOLT, , 0
+
+! Write the solution to files
+/OUTPUT, PRNSOL, lis
+PRNSOL
+/OUTPUT
+/OUTPUT, NLIST, lis
+NLIST,,,,COORD
+/OUTPUT
+/OUTPUT, ELIST, lis
+ELIST
+/OUTPUT
+/OUTPUT, MPLIST, lis
+MPLIST
+/OUTPUT
+
+! Calculate weighting field (readout)
+/SOLU
+LSCLEAR, ALL
+
+! Voltage boundaries on the drift (=0 V) and induction (=1 V) plane
+ASEL, S, LOC, Z, 0
+DA, ALL, VOLT, 0
+ASEL, S, LOC, Z, 3.06
+DA, ALL, VOLT, 1
+
+! Voltage boundary condition on the metal (layer: 1)
+VSEL, S, , , 1
+ASLV, S
+DA, ALL, VOLT, 0
+VSEL, S, , , 3
+ASLV, S
+DA, ALL, VOLT, 0
+
+! Meshing options
+VSEL, S,,, 1, 4
+ASLV, S
+
+! Solve the field
+SOLVE
+
+! Display the solution
+/POST1
+/EFACET, 1
+PLNSOL, VOLT, , 0
+
+! Write the solution
+/OUTPUT, WSOL, lis
+PRNSOL
+/OUTPUT
+
+! Calculate weighting field (drift)
+/SOLU
+LSCLEAR, ALL
+
+! Voltage boundaries on the drift (=1 V) and induction (=0 V) plane
+ASEL, S, LOC, Z, 0
+DA, ALL, VOLT, 1
+ASEL, S, LOC, Z, 3.06
+DA, ALL, VOLT, 0
+
+! Voltage boundary condition on the metal (layer: 1)
+VSEL, S, , , 1
+ASLV, S
+DA, ALL, VOLT, 0
+VSEL, S, , , 3
+ASLV, S
+DA, ALL, VOLT, 0
+
+! Meshing options
+VSEL, S,,, 1, 4
+ASLV, S
+
+! Solve the field
+SOLVE
+
+! Display the solution
+/POST1
+/EFACET, 1
+PLNSOL, VOLT, , 0
+
+! Write the solution
+/OUTPUT, DWSOL, lis
+PRNSOL
+/OUTPUT
