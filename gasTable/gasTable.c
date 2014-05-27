@@ -45,8 +45,8 @@ int main(int argc, char * argv[]) {
 	    
 	gas->PrintGas();
  	
- 	// Calculation from 0 kV/cm to 40 kV/cm in 50 steps
-	gas->SetFieldGrid(0., 40000., 50, false, 0., 0., 1, 0., 0., 1);
+ 	// Calculation from 0 kV/cm to 100 kV/cm in 50 steps
+	gas->SetFieldGrid(0., 100000., 50, false, 0., 0., 1, 0., 0., 1);
 	    
 	gas->EnableDebugging();
 	gas->Initialise();  
