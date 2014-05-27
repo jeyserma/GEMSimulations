@@ -112,7 +112,7 @@ int main(int argc, char * argv[]) {
     TString output = gasmixt[0] + "-" + gasmixt[1] + "-" + gasmixt[2] + "-" + gasmixt[3] + "-" + gasmixt[4] + "-" + gasmixt[5];
     
     std::string workingdir = "includes/";
-    workingdir.append(argv[1]);
+    workingdir.append("GEM5");
     workingdir.append("/");
 
     std::string particleType = "mu";
